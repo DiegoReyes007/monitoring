@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Monitoreo - Call Center</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 2rem;
+            font-weight: 300;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+
+        .stat {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            color: white;
+        }
+
+        .container {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .pc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .pc-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 1rem;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .pc-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(31, 38, 135, 0.5);
+        }
+
+        .pc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .pc-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .status {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .status.online {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .status.offline {
+            background: #f44336;
+            color: white;
+        }
+
+        .screenshot-container {
+            width: 100%;
+            height: 150px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .screenshot {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .no-screenshot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #999;
+            font-size: 0.9rem;
+        }
+
+        .pc-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 2% auto;
+            padding: 0;
+            border-radius: 15px;
+            width: 95%;
+            height: 90%;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .close {
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .close:hover {
+            opacity: 0.7;
+        }
+
+        .modal-body {
+            display: flex;
+            height: calc(100% - 80px);
+        }
+
+        .main-screen {
+            flex: 2;
+            padding: 1rem;
+            background: #f8f9fa;
+        }
+
+        .live-screenshot {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar {
+            flex: 1;
+            background: white;
+            border-left: 1px solid #eee;
+            overflow-y: auto;
+        }
+
+        .tab-buttons {
+            display: flex;
+            border-bottom: 1px solid #eee;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 1rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .tab-button.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            padding: 1rem;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            background: #f8f9fa;
+            padding: 0.8rem;
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            font-size: 0.9rem;
+        }
+
+        .timestamp {
+            color: #666;
+            font-size: 0.8rem;
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+
+        .refresh-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+            transition: transform 0.3s;
+        }
+
+        .refresh-btn:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Sistema de Monitoreo - Call Center</h1>
+        <div class="stats-bar">
+            <div class="stat"><strong>PCs Online:</strong> <span id="online-count">0</span></div>
+            <div class="stat"><strong>PCs Offline:</strong> <span id="offline-count">0</span></div>
+            <div class="stat"><strong>Total:</strong> <span id="total-count">0</span></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="pc-grid" id="pc-grid"></div>
+    </div>
+
+    <!-- Modal -->
+    <div id="pc-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">PC Detalle</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="main-screen">
+                    <img id="live-screenshot" class="live-screenshot" src="" alt="Pantalla en tiempo real">
+                </div>
+                <div class="sidebar">
+                    <div class="tab-buttons">
+                        <button class="tab-button active" data-tab="keylog">Keylogger</button>
+                        <button class="tab-button" data-tab="activity">Actividad</button>
+                        <button class="tab-button" data-tab="apps">Aplicaciones</button>
+                    </div>
+                    <div id="keylog-content" class="tab-content">
+                        <h3>Registros del Teclado</h3>
+                        <div id="keylog-entries"></div>
+                    </div>
+                    <div id="activity-content" class="tab-content" style="display: none;">
+                        <h3>Actividad del Usuario</h3>
+                        <div id="activity-entries"></div>
+                    </div>
+                    <div id="apps-content" class="tab-content" style="display: none;">
+                        <h3>Aplicaciones Activas</h3>
+                        <div id="apps-entries"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="refresh-btn" onclick="loadPCs()">🔄</button>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let currentPcId = null;
+        let screenshotUpdateInterval = null;
+
+        socket.on('connect', () => console.log('Conectado al servidor'));
+        socket.on('screenshot_update', data => {
+            if (currentPcId === data.pc_id) {
+                document.getElementById('live-screenshot').src = 'data:image/png;base64,' + data.screenshot;
+            }
+            const img = document.querySelector(`[data-pc-id="${data.pc_id}"] .screenshot`);
+            if (img) img.src = 'data:image/png;base64,' + data.screenshot;
+        });
+
+        async function loadPCs() {
+            try {
+                const res = await fetch('/api/pcs');
+                const pcs = await res.json();
+                const grid = document.getElementById('pc-grid');
+                grid.innerHTML = '';
+                let online = 0, offline = 0;
+                pcs.forEach(pc => {
+                    if (pc.status === 'online') online++; else offline++;
+                    const card = document.createElement('div');
+                    card.className = 'pc-card';
+                    card.dataset.pcId = pc.id;
+                    card.onclick = () => openPCModal(pc);
+                    card.innerHTML = `
+                        <div class="pc-header">
+                            <div class="pc-name">${pc.pc_name}</div>
+                            <div class="status ${pc.status}">${pc.status.toUpperCase()}</div>
+                        </div>
+                        <div class="screenshot-container">
+                            ${pc.has_screenshot
+                                ? `<img class="screenshot" src="/api/screenshot/${pc.id}" alt="Screenshot">`
+                                : '<div class="no-screenshot">Sin captura</div>'
+                            }
+                        </div>
+                        <div class="pc-info">
+                            <span>Usuario: ${pc.user_name || 'N/A'}</span>
+                            <span>IP: ${pc.ip_address || 'N/A'}</span>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+                document.getElementById('online-count').textContent = online;
+                document.getElementById('offline-count').textContent = offline;
+                document.getElementById('total-count').textContent = pcs.length;
+            } catch (err) {
+                console.error('Error cargando PCs:', err);
+            }
+        }
+
+        function openPCModal(pc) {
+            currentPcId = pc.id;
+            document.getElementById('modal-title').textContent = `${pc.pc_name} - ${pc.user_name || 'Usuario desconocido'}`;
+            document.getElementById('pc-modal').style.display = 'block';
+            loadModalData(pc.id);
+            screenshotUpdateInterval = setInterval(() => loadLiveScreenshot(pc.id), 2000);
+        }
+
+        async function loadModalData(pcId) {
+            await Promise.all([
+                loadLiveScreenshot(pcId),
+                loadKeylogData(pcId),
+                loadActivityData(pcId),
+                loadApplicationsData(pcId)
+            ]);
+        }
+
+        async function loadLiveScreenshot(pcId) {
+            try {
+                const res = await fetch(`/api/screenshot/${pcId}`);
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('live-screenshot').src = 'data:image/png;base64,' + data.screenshot;
+                }
+            } catch (err) {
+                console.error('Error cargando screenshot:', err);
+            }
+        }
+
+        async function loadKeylogData(pcId) {
+            try {
+                const res = await fetch(`/api/keylog/${pcId}`);
+                const data = await res.json();
+                const container = document.getElementById('keylog-entries');
+                container.innerHTML = '';
+                data.forEach(entry => {
+                    const div = document.createElement('div');
+                    div.className = 'log-entry';
+                    div.innerHTML = `
+                        <span class="timestamp">${formatTimestamp(entry.timestamp)}</span>
+                        <strong>Aplicación:</strong> ${entry.application}<br>
+                        <strong>Ventana:</strong> ${entry.window_title}<br>
+                        <strong>Teclas:</strong> ${entry.keys_pressed}
+                    `;
+                    container.appendChild(div);
+                });
+            } catch (err) {
+                console.error('Error cargando keylog:', err);
+            }
+        }
+
+        async function loadActivityData(pcId) {
+            try {
+                const res = await fetch(`/api/activity/${pcId}`);
+                const data = await res.json();
+                const container = document.getElementById('activity-entries');
+                container.innerHTML = '';
+                data.forEach(entry => {
+                    const div = document.createElement('div');
+                    div.className = 'log-entry';
+                    div.innerHTML = `
+                        <span class="timestamp">${formatTimestamp(entry.timestamp)}</span>
+                        <strong>Estado:</strong> ${entry.activity_type}<br>
+                        <strong>Duración:</strong> ${entry.duration} segundos
+                    `;
+                    container.appendChild(div);
+                });
+            } catch (err) {
+                console.error('Error cargando actividad:', err);
+            }
+        }
+
+        async function loadApplicationsData(pcId) {
+            try {
+                const res = await fetch(`/api/applications/${pcId}`);
+                const data = await res.json();
+                const container = document.getElementById('apps-entries');
+                container.innerHTML = '';
+                data.forEach(app => {
+                    const div = document.createElement('div');
+                    div.className = 'log-entry';
+                    div.innerHTML = `
+                        <span class="timestamp">${formatTimestamp(app.timestamp)}</span>
+                        <strong>${app.app_name}</strong><br>
+                        <em>${app.window_title}</em><br>
+                        ${app.url ? `<a href="${app.url}" target="_blank">${app.url}</a>` : ''}
+                    `;
+                    container.appendChild(div);
+                });
+            } catch (err) {
+                console.error('Error cargando aplicaciones:', err);
+            }
+        }
+
+        function formatTimestamp(ts) {
+            return new Date(ts).toLocaleString('es-ES');
+        }
+
+        document.querySelector('.close').addEventListener('click', () => {
+            document.getElementById('pc-modal').style.display = 'none';
+            clearInterval(screenshotUpdateInterval);
+        });
+
+        window.addEventListener('click', e => {
+            if (e.target === document.getElementById('pc-modal')) {
+                document.getElementById('pc-modal').style.display = 'none';
+                clearInterval(screenshotUpdateInterval);
+            }
+        });
+
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+                btn.classList.add('active');
+                document.getElementById(`${btn.dataset.tab}-content`).style.display = 'block';
+            });
+        });
+
+        loadPCs();
+        setInterval(loadPCs, 10000); // auto-refresh cada 10s
+    </script>
+</body>
+</html>
