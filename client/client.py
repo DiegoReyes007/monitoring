@@ -8,7 +8,7 @@ import base64
 import socket
 
 # Cambia esta URL por la de tu servidor en Render
-SERVER_URL = "https://monitoring-dashboard.onrender.com/api/client"
+SERVER_URL = "https://monitoring-jqsa.onrender.com/"
 
 PC_NAME = f"PC-{uuid.uuid4().hex[:6]}"
 
